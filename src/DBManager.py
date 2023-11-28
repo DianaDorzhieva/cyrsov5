@@ -1,5 +1,6 @@
 import psycopg2
 from utils import get_info, get_vacanci, delete_symbol
+from confing import config
 
 id_companies = [1740,  # яндекс
                 3529,  # сбер
@@ -25,10 +26,11 @@ class DBManager:
         connection.autocommit = True
         cursor = connection.cursor()
         try:
-            cursor.execute(f"DROP DATABASE {self.db_name}")
-            cursor.execute(f"CREATE DATABASE {self.db_name}")
+            cursor.execute(f"DROP DATABASE IF EXISTS {self.db_name}")
+            cursor.execute(f"CREATE DATABASE   {self.db_name}")
         except psycopg2.ProgrammingError:
             pass
+
         cursor.close()
         connection.close()
 
@@ -96,6 +98,10 @@ class DBManager:
                                 FROM companies
                                 JOIN vacanci USING (company_id) 
                                 GROUP BY companies.company_id """)
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
+
         connection.commit()
         connection.close()
 
@@ -106,6 +112,9 @@ class DBManager:
                                 vacanci.salary_avr, vacanci.url 
                                 FROM companies
                                 JOIN vacanci USING (company_id) """)
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
 
         connection.commit()
         connection.close()
@@ -116,8 +125,23 @@ class DBManager:
             cursor.execute("""SELECT * from vacanci
                               WHERE salary_max > salary_avr
                                ORDER BY salary_max """)
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
         connection.commit()
         connection.close()
+
+    def avr_salary(self):
+        connection = psycopg2.connect(database=self.db_name, **self.params)
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT vacanci_name,salary_avr
+                                from vacanci 
+                                ORDER BY salary_avr DESC """)
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
+            connection.commit()
+            connection.close()
 
     def get_vacancies_with_keyword(self, word):
         connection = psycopg2.connect(database=self.db_name, **self.params)
@@ -126,6 +150,9 @@ class DBManager:
                               WHERE vacanci_name like '%{word}'
                               OR vacanci_name like '{word}%'
                               OR vacanci_name like '%{word}%' """)
+            rows = cursor.fetchall()
+            for row in rows:
+                print(row)
 
         connection.commit()
         connection.close()
